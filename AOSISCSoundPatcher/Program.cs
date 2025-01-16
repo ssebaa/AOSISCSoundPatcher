@@ -44,7 +44,9 @@ namespace AOSISCSoundPatcher
                 // Patch Armor sounds, Rings (pick up sound) & Necklaces equip and unequip sounds.
                 if (settings.PatchArmors)
                     PatchArmors(state);
-
+                // Jewelry Patch
+                if (settings.PatchJewelry)
+                    PatchJewelry(state);
                 // Patch weapon swing and impact sounds.
                 if (settings.PatchWeapons)
                     PatchWeapons(state, aosActive);
@@ -189,8 +191,7 @@ namespace AOSISCSoundPatcher
                 }
             }
         }
-
-        private static void PatchArmors(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
+        private static void PatchJewelry(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
             foreach (var armor in state.LoadOrder.PriorityOrder.Armor().WinningOverrides())
             {
@@ -209,7 +210,27 @@ namespace AOSISCSoundPatcher
                         armorCopy.PickUpSound.SetTo(ImmersiveSoundsCompendium.ITMNeckUp);
                         armorCopy.PutDownSound.SetTo(ImmersiveSoundsCompendium.ITMNeckDown);
                     }
-                    else if (armor.Keywords.Contains(Skyrim.Keyword.ArmorCuirass))
+
+                    if (armor.PickUpSound.FormKey != armorCopy.PickUpSound.FormKey || armor.PutDownSound.FormKey != armorCopy.PutDownSound.FormKey)
+                        state.PatchMod.Armors.Set(armorCopy);
+                }
+                catch (Exception e)
+                {
+                    throw RecordException.Enrich(e, armor);
+                }
+            }
+        }
+        private static void PatchArmors(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
+        {
+            foreach (var armor in state.LoadOrder.PriorityOrder.Armor().WinningOverrides())
+            {
+                try
+                {
+                    if (armor.Keywords == null) continue;
+
+                    var armorCopy = armor.DeepCopy();
+
+                    if (armor.Keywords.Contains(Skyrim.Keyword.ArmorCuirass))
                     {
                         foreach (var keyword in armor.Keywords)
                         {
